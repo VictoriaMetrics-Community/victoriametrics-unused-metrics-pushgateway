@@ -1,4 +1,4 @@
-# Generate custom metrics about unused Victoria Metrics series for Prometheus Pushgateway
+# Generate custom metrics about unused VictoriaMetrics series for Prometheus Pushgateway
 
 ## Motivation
 
