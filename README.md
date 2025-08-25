@@ -1,10 +1,13 @@
-# Generate custom metrics about unused VictoriaMetrics series for Prometheus Pushgateway
+
+# VictoriaMetrics Unused Metrics Exporter
 
 ## Motivation
 
 In large observability environments, it is common for time series databases like VictoriaMetrics to accumulate a significant number of metrics that are no longer being queried or used. These unused metrics can consume storage, increase costs, and make troubleshooting more difficult.
 
-This script was created to help you identify and expose custom metrics that are not being queried within a configurable time window. By exporting this information in Prometheus exposition format, you can:
+This script helps you identify and expose metrics in VictoriaMetrics (single-node or cluster) that have not been queried within a configurable time window. It exports this information in Prometheus exposition format and pushes the result directly to VictoriaMetrics ingestion endpoints.
+
+With this script, you can:
 
 - Visualize unused metrics in Grafana or other observability tools
 - Automate cleanup or alerting for unused metrics
@@ -13,15 +16,41 @@ This script was created to help you identify and expose custom metrics that are 
 ## How it works
 
 - Queries the VictoriaMetrics TSDB status API to get the last request timestamp for each metric
-- Filters metrics that have not been queried in the specified period
+- Filters metrics that have not been queried in the specified period (configurable with `--time-limit`)
 - Exports the result as a Prometheus metric (`vm_unused_metrics`)
-- Pushes the result to a Prometheus Pushgateway for easy integration with your monitoring stack
+- Pushes the result directly to the VictoriaMetrics ingestion endpoint (single-node or cluster)
 
 ## Usage
 
-1. Configure the script variables as needed (VictoriaMetrics endpoint, Pushgateway URL, job name, time window, etc)
-2. Run the script manually or schedule it as a CronJob
-3. Visualize or alert on the `vm_unused_metrics` metric in your observability platform
+You can run the script for both single-node and cluster VictoriaMetrics deployments. All configuration is done via command-line arguments:
+
+```bash
+./vm-unused-metrics-custom-to-pushgateway.sh --single-node <vm url> [options]
+./vm-unused-metrics-custom-to-pushgateway.sh --cluster-version <vmselect url> --vminsert-url <vminsert url> [options]
+```
+
+**Options:**
+
+- `--single-node <vm url>`: VictoriaMetrics single-node base URL (**required** for single-node mode)
+- `--cluster-version <vmselect url>`: VictoriaMetrics cluster vmselect base URL (**required** for cluster mode)
+- `--vminsert-url <vminsert url>`: VictoriaMetrics cluster vminsert base URL (**required** with --cluster-version)
+- `--top <n>`: Number of top metrics to check (default: 10). To increase this limit, you must also set the `-search.maxTSDBStatusTopNSeries` flag in your VictoriaMetrics configuration (see below). *(optional)*
+- `--time-limit <h|d|m>`: Time window to consider a metric unused. Use formats like `12h` (hours), `7d` (days), `2m` (months). Default: 7d. *(optional)*
+- `--job <job_name>`: Job label for the exported metrics (default: victoriametrics-statistics). *(optional)*
+- `--help`: Show help message and exit
+
+**Examples:**
+
+```sh
+# Single-node, default time window (7 days)
+./vm-unused-metrics-custom-to-pushgateway.sh --single-node http://localhost:8428
+
+# Single-node, custom time window (10 days)
+./vm-unused-metrics-custom-to-pushgateway.sh --single-node http://localhost:8428 --time-limit 10d
+
+# Cluster, custom time window (2 months)
+./vm-unused-metrics-custom-to-pushgateway.sh --cluster-version https://vmselect:8480 --vminsert-url https://vminsert:8480 --top 100 --job myjob --time-limit 2m
+```
 
 ## Requirements
 
@@ -29,21 +58,32 @@ This script was created to help you identify and expose custom metrics that are 
 - curl
 - jq
 - VictoriaMetrics (Single-node or Cluster version)
-- Pushgateway
 
 ## Configuration
 
-- The script supports both single-node and cluster VictoriaMetrics deployments
-- The number of metrics returned can be controlled with the `-search.maxTSDBStatusTopNSeries` flag in VictoriaMetrics (default: 10)
-- The job name sent to Pushgateway is configurable via the `job_name` variable at the top of the script. This allows you to distinguish between different metric sources or jobs in your Prometheus setup.
-- All configuration is done at the top of the script for easy customization
+- The script supports both single-node and cluster VictoriaMetrics deployments.
+- The number of metrics returned is controlled by the `--top` argument, but also depends on the VictoriaMetrics flag `-search.maxTSDBStatusTopNSeries`. See the [official documentation](https://docs.victoriametrics.com/#resource-usage-limits).
+  - **Example:** To allow up to 1000 metrics, add the following to your VictoriaMetrics startup:
+
+    ```text
+        -search.maxTSDBStatusTopNSeries=1000
+    ```
+
+- The job name is configurable via the `--job` argument.
+- The time window for unused metrics is set with `--time-limit` (supports h/d/m, e.g., 12h, 7d, 2m).
+- All configuration is done via command-line arguments for flexibility.
 
 ## Example output
 
+```text
+vm_unused_metrics{job="victoriametrics-statistics",last_request="never",metric_name="my_old_metric"} 42
+vm_unused_metrics{job="victoriametrics-statistics",last_request="2025-08-10T12:00:00",metric_name="another_unused_metric"} 5
 ```
-vm_unused_metrics{last_request="never",metric_name="my_old_metric"} 42
-vm_unused_metrics{last_request="2025-08-10T12:00:00",metric_name="another_unused_metric"} 5
-```
+
+## Notes
+
+- For cluster mode, both `--cluster-version` (vmselect) and `--vminsert-url` (vminsert) must be provided.
+- The script pushes metrics directly to VictoriaMetrics ingestion endpoints.
 
 ## License
 
