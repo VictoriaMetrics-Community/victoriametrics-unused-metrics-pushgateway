@@ -20,13 +20,13 @@ With this script, you can:
 - Exports the result as a Prometheus metric (`vm_unused_metrics`)
 - Pushes the result directly to the VictoriaMetrics ingestion endpoint (single-node or cluster)
 
-## Usage
+## CLI version
 
 You can run the script for both single-node and cluster VictoriaMetrics deployments. All configuration is done via command-line arguments:
 
 ```bash
-./vm-unused-metrics-custom-to-pushgateway.sh --single-node <vm url> [options]
-./vm-unused-metrics-custom-to-pushgateway.sh --cluster-version <vmselect url> --vminsert-url <vminsert url> [options]
+./vm-unused-metrics-export.sh --single-node <vm url> [options]
+./vm-unused-metrics-export.sh --cluster-version <vmselect url> --vminsert-url <vminsert url> [options]
 ```
 
 **Options:**
@@ -43,23 +43,23 @@ You can run the script for both single-node and cluster VictoriaMetrics deployme
 
 ```sh
 # Single-node, default time window (7 days)
-./vm-unused-metrics-custom-to-pushgateway.sh --single-node http://localhost:8428
+./vm-unused-metrics-export.sh --single-node http://localhost:8428
 
 # Single-node, custom time window (10 days)
-./vm-unused-metrics-custom-to-pushgateway.sh --single-node http://localhost:8428 --time-limit 10d
+./vm-unused-metrics-export.sh --single-node http://localhost:8428 --time-limit 10d
 
 # Cluster, custom time window (2 months)
-./vm-unused-metrics-custom-to-pushgateway.sh --cluster-version https://vmselect:8480 --vminsert-url https://vminsert:8480 --top 100 --job myjob --time-limit 2m
+./vm-unused-metrics-export.sh --cluster-version https://vmselect:8480 --vminsert-url https://vminsert:8480 --top 100 --job myjob --time-limit 2m
 ```
 
-## Requirements
+### Requirements
 
 - Bash
 - curl
 - jq
 - VictoriaMetrics (Single-node or Cluster version)
 
-## Configuration
+### Configuration
 
 - The script supports both single-node and cluster VictoriaMetrics deployments.
 - The number of metrics returned is controlled by the `--top` argument, but also depends on the VictoriaMetrics flag `-search.maxTSDBStatusTopNSeries`. See the [official documentation](https://docs.victoriametrics.com/#resource-usage-limits).
@@ -73,17 +73,21 @@ You can run the script for both single-node and cluster VictoriaMetrics deployme
 - The time window for unused metrics is set with `--time-limit` (supports h/d/m, e.g., 12h, 7d, 2m).
 - All configuration is done via command-line arguments for flexibility.
 
-## Example output
+### Example metric output
 
 ```text
 vm_unused_metrics{job="victoriametrics-statistics",last_request="never",metric_name="my_old_metric"} 42
 vm_unused_metrics{job="victoriametrics-statistics",last_request="2025-08-10T12:00:00",metric_name="another_unused_metric"} 5
 ```
 
-## Notes
+### Notes
 
 - For cluster mode, both `--cluster-version` (vmselect) and `--vminsert-url` (vminsert) must be provided.
 - The script pushes metrics directly to VictoriaMetrics ingestion endpoints.
+
+## Container version
+
+See the [container/README.md](container/README.md) for details.
 
 ## License
 
