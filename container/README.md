@@ -65,11 +65,11 @@ spec:
               value: "http://vmselect.acme.com"
             - name: VM_PUSH_URL
               value: "http://vminsert.acme.com"
-            - name: VM_TOP
+            - name: TOP
               value: "100"
-            - name: VM_JOB
+            - name: JOB
               value: "victoriametrics-exporter"
-            - name: VM_TIME_LIMIT
+            - name: TIME_LIMIT
               value: "30d"
           restartPolicy: OnFailure
 ```

@@ -25,8 +25,8 @@ With this script, you can:
 You can run the script for both single-node and cluster VictoriaMetrics deployments. All configuration is done via command-line arguments:
 
 ```bash
-./vm-unused-metrics-export.sh --single-node <vm url> [options]
-./vm-unused-metrics-export.sh --cluster-version <vmselect url> --vminsert-url <vminsert url> [options]
+./vm-unused-metrics-exporter.sh  --single-node <vm url> [options]
+./vm-unused-metrics-exporter.sh  --cluster-version <vmselect url> --vminsert-url <vminsert url> [options]
 ```
 
 **Options:**
@@ -43,13 +43,13 @@ You can run the script for both single-node and cluster VictoriaMetrics deployme
 
 ```sh
 # Single-node, default time window (7 days)
-./vm-unused-metrics-export.sh --single-node http://localhost:8428
+./vm-unused-metrics-exporter.sh  --single-node http://localhost:8428
 
 # Single-node, custom time window (10 days)
-./vm-unused-metrics-export.sh --single-node http://localhost:8428 --time-limit 10d
+./vm-unused-metrics-exporter.sh  --single-node http://localhost:8428 --time-limit 10d
 
 # Cluster, custom time window (2 months)
-./vm-unused-metrics-export.sh --cluster-version https://vmselect:8480 --vminsert-url https://vminsert:8480 --top 100 --job myjob --time-limit 2m
+./vm-unused-metrics-exporter.sh  --cluster-version https://vmselect:8480 --vminsert-url https://vminsert:8480 --top 100 --job myjob --time-limit 2m
 ```
 
 ### Requirements
