@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Default configuration from environment variables
-top="${VM_TOP:-10}"
-job="${VM_JOB:-victoriametrics-statistics}"
+top="${TOP:-10}"
+job="${JOB:-victoriametrics-statistics}"
 time_limit="${TIME_LIMIT:-7d}"
 vm_url="${VM_URL}"
 vm_push_url="${VM_PUSH_URL}"
